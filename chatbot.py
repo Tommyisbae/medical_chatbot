@@ -3,6 +3,7 @@
 # Run with `python chatbot.py` after installing dependencies.
 
 import os
+from datetime import datetime
 from dotenv import load_dotenv
 from langchain_core.runnables import RunnableWithMessageHistory
 from langchain_core.chat_history import InMemoryChatMessageHistory
@@ -13,6 +14,10 @@ from langchain_core.messages import HumanMessage, AIMessage
 # Load API key from .env
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
+
+# Initialize log file
+log_file = open("conversation_log.txt", "a", encoding="utf-8")
+log_file.write(f"\n=== New Session: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n")
 
 # Initialize Gemini 1.5 Flash
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=api_key, temperature=0.7)
@@ -137,7 +142,10 @@ session_id = "default"
 print("Start chatting (type 'exit' to stop):")
 while True:
     user_input = input("You: ")
+    log_file.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] User: {user_input}\n")
     if user_input.lower() == "exit":
+        log_file.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Session ended\n")
+        log_file.close()
         break
     # Stage logic
     if stage == "chief_complaint" and complaint_count < 3:
@@ -187,6 +195,9 @@ while True:
         },
         config={"configurable": {"session_id": session_id}}
     ).content
+    
+    # Log AI response
+    log_file.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] AI: {response}\n")
     
     # Check if SOAP note is generated
     if "Subjective:" in response:
